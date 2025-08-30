@@ -65,7 +65,8 @@ const SqlChatPage: React.FC = () => {
             }
             
             // 1. Generate SQL and chart suggestion from AI
-            const { textResponse, sql, chartSuggestion } = await aiService.generateSqlFromNaturalLanguage(
+            // FIX: The AI service returns a 'text' property, not 'textResponse', as per the ChatMessageContent type.
+            const { text, sql, chartSuggestion } = await aiService.generateSqlFromNaturalLanguage(
                 input, 
                 selectedDb.schema,
                 messages,
@@ -83,7 +84,7 @@ const SqlChatPage: React.FC = () => {
                 id: `msg_${Date.now() + 1}`,
                 sender: 'ai',
                 content: {
-                    text: textResponse,
+                    text: text,
                     sql: sql,
                     results: results,
                     // Only include chart suggestion if there are results to display

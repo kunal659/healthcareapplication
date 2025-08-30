@@ -4,6 +4,9 @@
 import express from 'express';
 import cors from 'cors';
 import sql from 'mssql';
+import { ChatOpenAI } from "@langchain/openai";
+import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { JsonOutputParser } from "@langchain/core/output_parsers";
 
 const app = express();
 const port = 3001; // The port our backend server will run on
@@ -142,6 +145,75 @@ app.post('/api/query', async (req, res) => {
     res.status(500).json({ error: 'Failed to connect or execute query.', details: err.message });
   }
 });
+
+
+// --- API Endpoint to Generate SQL with LangChain and OpenAI ---
+app.post('/api/generate-sql', async (req, res) => {
+    const { prompt, schema, history, dbType, apiKey } = req.body;
+    
+    if (!prompt || !schema || !dbType || !apiKey) {
+        return res.status(400).json({ error: 'Missing required parameters for AI generation.' });
+    }
+
+    try {
+        console.log('[AI] Initializing OpenAI model...');
+        const model = new ChatOpenAI({
+            apiKey: apiKey,
+            modelName: "gpt-4-turbo", // Or "gpt-3.5-turbo"
+            temperature: 0,
+        });
+
+        const parser = new JsonOutputParser();
+
+        const formatInstructions = parser.getFormatInstructions();
+
+        const schemaString = schema.map(t => 
+            `Table "${t.tableName}" has columns: ${t.columns.map(c => `${c.name} (${c.type})`).join(', ')}.`
+        ).join('\n');
+        
+        const historyString = history
+            .map(msg => `${msg.sender === 'user' ? 'User' : 'AI'}: ${msg.content.text || ''} ${msg.content.sql || ''}`)
+            .join('\n');
+
+        const promptTemplate = ChatPromptTemplate.fromMessages([
+            ["system", `You are an expert SQL assistant for a {dbType} database. Your goal is to generate a syntactically correct SQL query based on the user's question and the provided database schema.
+
+            Guidelines:
+            1.  **Safety First:** ONLY generate SELECT queries. NEVER generate queries that modify the database (INSERT, UPDATE, DELETE, DROP, etc.).
+            2.  **Schema Awareness:** Use the following schema to construct the query:
+                {schema}
+            3.  **Clarity:** Provide a brief, one-sentence natural language response explaining the query you've generated.
+            4.  **Visualization:** If the user's question implies a breakdown, distribution, or grouping (e.g., "by category," "per user"), suggest a chart.
+                - Use 'pie' for simple distributions of a categorical column.
+                - Use 'bar' for counts of items in different categories.
+                - The labelsColumn must be a categorical column from the query, and the dataColumn must be a numerical column.
+            5.  **History:** Use the chat history for context if the user asks a follow-up question.
+                {history}
+            6.  **Output Format:** You MUST respond with a JSON object that follows these instructions: {format_instructions}
+            `],
+            ["human", "{prompt}"]
+        ]);
+        
+        const chain = promptTemplate.pipe(model).pipe(parser);
+        
+        console.log('[AI] Invoking LangChain...');
+        const result = await chain.invoke({
+            dbType,
+            schema: schemaString,
+            history: historyString,
+            prompt,
+            format_instructions: formatInstructions,
+        });
+
+        console.log('[AI] Generation successful.');
+        res.json(result);
+
+    } catch (err) {
+        console.error('[AI] LangChain/OpenAI error:', err.message);
+        res.status(500).json({ error: 'Failed to generate SQL query with AI.', details: err.message });
+    }
+});
+
 
 app.listen(port, () => {
   console.log(`Backend server listening at http://localhost:${port}`);

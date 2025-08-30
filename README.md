@@ -53,9 +53,8 @@ The application is built as a multi-purpose assistant with several key modules:
 - **Protected Routes:** Ensures that sensitive pages are only accessible to authenticated users.
 
 ### 2. User & API Key Management
-- **User Profile:** A dedicated page for users to view their details and an AI-generated bio.
-- **AI Bio Generation:** Integrates with the Gemini API (mocked) to generate a creative user bio.
-- **Secure API Key Storage:** Add, manage, and store API keys. Keys are masked in the UI and mock-encrypted.
+- **User Profile:** A dedicated page for users to view their details.
+- **Secure API Key Storage:** Add, manage, and store OpenAI API keys. Keys are masked in the UI and mock-encrypted.
 - **Key Rotation & Testing:** Set an "active" key, test its validity, and delete old keys.
 
 ### 3. Usage Dashboard
@@ -70,10 +69,10 @@ The application is built as a multi-purpose assistant with several key modules:
 - **Connection Testing & Status Monitoring:** Validate database credentials and view the live status of each connection.
 
 ### 5. Intelligent SQL Chat
-- **Natural Language to SQL:** A conversational AI chat interface that converts plain English questions into SQL queries.
-- **Schema-Aware Generation:** The AI (mocked Gemini) uses the schema of the selected database to generate accurate queries.
+- **Natural Language to SQL:** A conversational AI chat interface that converts plain English questions into SQL queries using **LangChain.js and OpenAI**.
+- **Schema-Aware Generation:** The AI uses the schema of the selected database to generate accurate, dialect-aware queries.
 - **Live Query Execution:** When connected to a live database via the backend, queries are executed against your actual data.
-- **Result Visualization:** Query results are displayed in a clean, paginated table.
+- **Result Visualization:** The AI can suggest and render charts (Pie, Bar) directly in the chat when appropriate.
 
 ### 6. Data Governance
 - **Natural Language Rules:** Define security policies in plain English (e.g., "Block queries on the patients table").
@@ -88,12 +87,13 @@ The application is built as a multi-purpose assistant with several key modules:
 - **Routing:** [React Router](https://reactrouter.com/)
 - **State Management:** React Context API
 - **Forms:** [React Hook Form](https://react-hook-form.com/)
-- **AI Integration:** Google Gemini API (`@google/genai`), mocked to run without a real API key.
+- **Charting:** [Chart.js](https://www.chartjs.org/) with `react-chartjs-2`
 - **Browser-side Database:** [sql.js](https://sql.js.org/) (SQLite via WebAssembly)
 
 ### Backend (Optional)
 - **Runtime:** [Node.js](https://nodejs.org/)
 - **Framework:** [Express](https://expressjs.com/)
+- **AI Integration:** [LangChain.js](https://js.langchain.com/) with the OpenAI SDK
 - **Database Driver:** [mssql](https://www.npmjs.com/package/mssql) for SQL Server connections.
 - **Middleware:** `cors` for enabling communication between the frontend and backend.
 
