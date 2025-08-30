@@ -127,7 +127,7 @@ export const deleteConnection = async (id: string): Promise<DatabaseConnection[]
     return getConnections();
 };
 
-export const testConnection = async (connectionData: Partial<DatabaseConnection>): Promise<void> => {
+export const testConnection = async (connectionData: Partial<DatabaseConnection>): Promise<string[]> => {
     await new Promise(res => setTimeout(res, 1000)); // Simulate network delay
     
     if (connectionData.password?.toLowerCase().includes('fail')) {
@@ -137,7 +137,17 @@ export const testConnection = async (connectionData: Partial<DatabaseConnection>
         throw new Error("Hostname could not be resolved.");
     }
     
-    return;
+    // On success, dynamically generate a list of mock databases
+    // to make the simulation more realistic by including the user's input.
+    const mockDatabases = new Set(['master', 'tempdb', 'model']);
+    if (connectionData.database) {
+        mockDatabases.add(connectionData.database);
+    } else {
+        // Add a default if the user didn't specify one
+        mockDatabases.add('OMOP1_mock');
+    }
+    
+    return Array.from(mockDatabases);
 };
 
 // Mock function to simulate checking connection statuses
@@ -169,11 +179,16 @@ export const checkConnectionsStatus = async (connections: DatabaseConnection[]):
     return updatedConnections;
 };
 
-const mockPatientData = [
+const mockPatientDataOMOP1 = [
     { id: 1, first_name: 'John', last_name: 'Doe', date_of_birth: '1985-05-15', gender: 'Male' },
     { id: 2, first_name: 'Jane', last_name: 'Smith', date_of_birth: '1992-08-22', gender: 'Female' },
     { id: 3, first_name: 'Peter', last_name: 'Jones', date_of_birth: '1978-11-30', gender: 'Male' },
     { id: 4, first_name: 'Mary', last_name: 'Williams', date_of_birth: '2001-02-10', gender: 'Female' },
+];
+
+const mockPatientDataOMOP2 = [
+    { id: 10, first_name: 'Alice', last_name: 'Johnson', date_of_birth: '1990-01-01', gender: 'Female' },
+    { id: 11, first_name: 'Bob', last_name: 'Miller', date_of_birth: '1988-03-12', gender: 'Male' },
 ];
 
 const mockAppointmentData = [
@@ -182,27 +197,36 @@ const mockAppointmentData = [
     { id: 103, patient_id: 3, appointment_date: '2024-08-16 09:00:00', reason: 'Follow-up' },
 ];
 
-export const executeQuery = async (sql: string): Promise<{ headers: string[], rows: any[][] }> => {
+export const executeQuery = async (sql: string, connection: DatabaseConnection): Promise<{ headers: string[], rows: any[][] }> => {
     await new Promise(res => setTimeout(res, 800)); // Simulate query execution time
     
     if (sql.toLowerCase().includes('delete') || sql.toLowerCase().includes('update') || sql.toLowerCase().includes('insert')) {
         throw new Error("For safety, only SELECT queries can be executed in this demo.");
     }
 
+    const patientData = connection.database === 'OMOP2' ? mockPatientDataOMOP2 : mockPatientDataOMOP1;
+
     if (sql.toLowerCase().includes('patients')) {
         if (sql.toLowerCase().includes('count')) {
-            return { headers: ['total_patients'], rows: [[mockPatientData.length]] };
+            return { headers: ['total_patients'], rows: [[patientData.length]] };
         }
-        const headers = Object.keys(mockPatientData[0]);
-        const rows = mockPatientData.map(p => Object.values(p));
+        if (patientData.length === 0) {
+             return { headers: ['id', 'first_name', 'last_name', 'date_of_birth', 'gender'], rows: [] };
+        }
+        const headers = Object.keys(patientData[0]);
+        const rows = patientData.map(p => Object.values(p));
         return { headers, rows };
     }
     
     if (sql.toLowerCase().includes('appointments')) {
-         const headers = Object.keys(mockAppointmentData[0]);
+         // Only OMOP1 has appointment data in this mock
+         if (connection.database !== 'OMOP1') {
+             return { headers: ['id', 'patient_id', 'appointment_date', 'reason'], rows: [] };
+         }
+        const headers = Object.keys(mockAppointmentData[0]);
         const rows = mockAppointmentData.map(p => Object.values(p));
         return { headers, rows };
     }
 
-    throw new Error("Query execution failed. The mock database only contains 'patients' and 'appointments' tables.");
+    throw new Error(`Query execution failed. The mock database '${connection.database}' only contains 'patients' and 'appointments' tables.`);
 };

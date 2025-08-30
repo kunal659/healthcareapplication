@@ -37,7 +37,7 @@ const SqlChatPage: React.FC = () => {
             setMessages([{
                 id: `msg_${Date.now()}`,
                 sender: 'ai',
-                content: { text: `Connected to **${selectedDb.name}**. What would you like to know about your data?` },
+                content: { text: `Connected to **${selectedDb.name}** (${selectedDb.database}). What would you like to know about your data?` },
                 timestamp: new Date().toISOString()
             }]);
         } else {
@@ -81,7 +81,7 @@ const SqlChatPage: React.FC = () => {
 
             // 2. Execute SQL query
             if (sql && !sql.startsWith('--')) {
-                const results = await dbService.executeQuery(sql);
+                const results = await dbService.executeQuery(sql, selectedDb);
                 const aiResultMessage: ChatMessage = {
                     id: `msg_${Date.now() + 2}`,
                     sender: 'ai',

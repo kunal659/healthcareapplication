@@ -23,22 +23,27 @@ const DatabaseConnectionForm: React.FC<DatabaseConnectionFormProps> = ({ onSubmi
   const selectedType = watch('type');
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ status: 'success' | 'error'; message: string } | null>(null);
+  const [availableDatabases, setAvailableDatabases] = useState<string[] | null>(null);
 
   useEffect(() => {
       // When defaultValues change (i.e., when editing a different item), reset the form
       Object.entries(defaultValues || {}).forEach(([key, value]) => {
           setValue(key as keyof DatabaseConnection, value);
       });
+      setAvailableDatabases(null);
+      setTestResult(null);
   }, [defaultValues, setValue]);
 
 
   const handleTestConnection = async () => {
     setIsTesting(true);
     setTestResult(null);
+    setAvailableDatabases(null);
     try {
       const formData = watch();
-      await testConnection(formData);
-      setTestResult({ status: 'success', message: 'Connection successful!' });
+      const dbList = await testConnection(formData);
+      setAvailableDatabases(dbList);
+      setTestResult({ status: 'success', message: 'Connection successful! Please select a database.' });
     } catch (error: any) {
       setTestResult({ status: 'error', message: error.message || 'Connection failed.' });
     } finally {
@@ -92,12 +97,28 @@ const DatabaseConnectionForm: React.FC<DatabaseConnectionFormProps> = ({ onSubmi
                   error={errors.port?.message}
                 />
             </div>
-            <Input
-              id="database"
-              label="Database Name"
-              {...register('database', { required: 'Database name is required' })}
-              error={errors.database?.message}
-            />
+            {availableDatabases ? (
+                <div>
+                    <label htmlFor="database-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Database Name</label>
+                    <select
+                        id="database-select"
+                        {...register('database', { required: 'Database name is required' })}
+                        className="w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 focus:ring-primary-500"
+                    >
+                        <option value="">Select a database...</option>
+                        {availableDatabases.map(dbName => <option key={dbName} value={dbName}>{dbName}</option>)}
+                    </select>
+                    {errors.database && <p className="mt-1 text-sm text-red-500">{errors.database.message}</p>}
+                </div>
+            ) : (
+                <Input
+                  id="database"
+                  label="Database Name"
+                  {...register('database')}
+                  error={errors.database?.message}
+                  placeholder="e.g., OMOP1 (will be verified on test)"
+                />
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
                   id="user"

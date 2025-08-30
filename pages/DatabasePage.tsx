@@ -113,7 +113,7 @@ const DatabasePage: React.FC = () => {
                    <span className="text-3xl">{getDbIcon(conn.type)}</span>
                    <div>
                      <p className="font-bold text-lg text-gray-800 dark:text-gray-100">{conn.name}</p>
-                     <p className="text-sm text-gray-500">{conn.type} &bull; {conn.host || conn.filePath}</p>
+                     <p className="text-sm text-gray-500">{conn.type} &bull; {conn.host || conn.filePath}{conn.database ? ` • ${conn.database}` : ''}</p>
                    </div>
                 </div>
                 <div className="flex items-center space-x-4">
