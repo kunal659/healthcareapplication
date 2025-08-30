@@ -33,6 +33,9 @@ const Navbar: React.FC = () => {
                 <NavLink to="/databases" className={navLinkClasses}>
                   Databases
                 </NavLink>
+                 <NavLink to="/sql-chat" className={navLinkClasses}>
+                  SQL Chat
+                </NavLink>
                 <NavLink to="/profile" className={navLinkClasses}>
                   Profile
                 </NavLink>

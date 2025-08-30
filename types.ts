@@ -13,6 +13,14 @@ export interface ApiKey {
 export type DatabaseType = 'PostgreSQL' | 'MySQL' | 'SQL Server' | 'SQLite';
 export type ConnectionStatus = 'connected' | 'disconnected' | 'error' | 'connecting';
 
+export interface TableSchema {
+  tableName: string;
+  columns: {
+    name: string;
+    type: string;
+  }[];
+}
+
 export interface DatabaseConnection {
   id: string;
   name: string;
@@ -24,6 +32,7 @@ export interface DatabaseConnection {
   password?: string; // Encrypted
   filePath?: string; // For SQLite
   status: ConnectionStatus;
+  schema?: TableSchema[];
 }
 
 
@@ -44,4 +53,20 @@ export interface UsageLog {
   keyId: string;
   action: string;
   status: 'Success' | 'Failure';
+}
+
+export type ChatMessageSender = 'user' | 'ai';
+
+export interface ChatMessageContent {
+    text?: string;
+    sql?: string;
+    results?: { headers: string[]; rows: any[][] };
+    error?: string;
+}
+
+export interface ChatMessage {
+    id: string;
+    sender: ChatMessageSender;
+    content: ChatMessageContent;
+    timestamp: string;
 }

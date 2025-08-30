@@ -14,6 +14,7 @@ import Navbar from './components/Navbar';
 import DashboardPage from './pages/DashboardPage';
 import SettingsPage from './pages/SettingsPage';
 import DatabasePage from './pages/DatabasePage';
+import SqlChatPage from './pages/SqlChatPage';
 
 function App() {
   return (
@@ -57,6 +58,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <DatabasePage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/sql-chat" 
+                element={
+                  <ProtectedRoute>
+                    <SqlChatPage />
                   </ProtectedRoute>
                 } 
               />
