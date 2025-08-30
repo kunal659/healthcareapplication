@@ -55,6 +55,16 @@ export const addConnection = async (connectionData: Omit<DatabaseConnection, 'id
     if (!user) throw new Error("User not logged in");
     const db = await getDb();
 
+    let status: 'connected' | 'disconnected' = 'disconnected';
+    try {
+        await testConnection(connectionData);
+        status = 'connected';
+    } catch (e) {
+        console.warn("Initial connection test failed, saving as disconnected.", e);
+        // If the test fails, we still save it but as disconnected.
+        status = 'disconnected';
+    }
+
     db.run(
         `INSERT INTO database_connections (id, user_id, name, type, host, port, database, user, password, filePath, status, schema)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -66,7 +76,8 @@ export const addConnection = async (connectionData: Omit<DatabaseConnection, 'id
             connectionData.user ?? null,
             connectionData.password ? mockEncrypt(connectionData.password) : null,
             connectionData.filePath ?? null,
-            'disconnected', JSON.stringify(mockSchema)
+            status, // Use the dynamically determined status
+            JSON.stringify(mockSchema)
         ]
     );
 
@@ -79,8 +90,17 @@ export const updateConnection = async (connectionData: DatabaseConnection): Prom
     if (!user) throw new Error("User not logged in");
     const db = await getDb();
     
+    let status: 'connected' | 'disconnected' | 'error' = connectionData.status as any;
+    try {
+        await testConnection(connectionData);
+        status = 'connected';
+    } catch (e) {
+        console.warn("Connection test failed during update, saving as disconnected.", e);
+        status = 'disconnected';
+    }
+
     db.run(
-        `UPDATE database_connections SET name = ?, type = ?, host = ?, port = ?, database = ?, user = ?, password = ?, filePath = ?
+        `UPDATE database_connections SET name = ?, type = ?, host = ?, port = ?, database = ?, user = ?, password = ?, filePath = ?, status = ?
          WHERE id = ? AND user_id = ?`,
         [
             connectionData.name, connectionData.type,
@@ -90,6 +110,7 @@ export const updateConnection = async (connectionData: DatabaseConnection): Prom
             connectionData.user ?? null,
             connectionData.password ? mockEncrypt(connectionData.password) : null,
             connectionData.filePath ?? null,
+            status, // Also update the status field
             connectionData.id, user.id
         ]
     );
