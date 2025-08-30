@@ -1,3 +1,4 @@
+
 import { User, DatabaseConnection, TableSchema } from '../types';
 import { mockEncrypt, mockDecrypt } from './encryption';
 import { getDb, saveDatabase } from './sqliteService';
@@ -59,9 +60,13 @@ export const addConnection = async (connectionData: Omit<DatabaseConnection, 'id
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
             `db_${Date.now()}`, user.id, connectionData.name, connectionData.type,
-            connectionData.host, connectionData.port, connectionData.database,
-            connectionData.user, connectionData.password ? mockEncrypt(connectionData.password) : null,
-            connectionData.filePath, 'disconnected', JSON.stringify(mockSchema)
+            connectionData.host ?? null,
+            connectionData.port ?? null,
+            connectionData.database ?? null,
+            connectionData.user ?? null,
+            connectionData.password ? mockEncrypt(connectionData.password) : null,
+            connectionData.filePath ?? null,
+            'disconnected', JSON.stringify(mockSchema)
         ]
     );
 
@@ -78,10 +83,14 @@ export const updateConnection = async (connectionData: DatabaseConnection): Prom
         `UPDATE database_connections SET name = ?, type = ?, host = ?, port = ?, database = ?, user = ?, password = ?, filePath = ?
          WHERE id = ? AND user_id = ?`,
         [
-            connectionData.name, connectionData.type, connectionData.host,
-            connectionData.port, connectionData.database, connectionData.user,
+            connectionData.name, connectionData.type,
+            connectionData.host ?? null,
+            connectionData.port ?? null,
+            connectionData.database ?? null,
+            connectionData.user ?? null,
             connectionData.password ? mockEncrypt(connectionData.password) : null,
-            connectionData.filePath, connectionData.id, user.id
+            connectionData.filePath ?? null,
+            connectionData.id, user.id
         ]
     );
     await saveDatabase();
