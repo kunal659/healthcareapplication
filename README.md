@@ -1,6 +1,6 @@
 # Healthcare Assistant
 
-Healthcare Assistant is a feature-rich, frontend-only web application that demonstrates a wide range of functionalities, from secure user authentication to advanced AI-powered data interaction. It serves as a comprehensive showcase of modern web development practices, using a mock backend powered by browser `localStorage` to provide a complete, interactive user experience without requiring a server.
+Healthcare Assistant is a feature-rich, frontend-only web application that demonstrates a wide range of functionalities, from secure user authentication to advanced AI-powered data interaction. It serves as a comprehensive showcase of modern web development practices, using an in-browser **SQLite** database via `sql.js` (WebAssembly) to provide a complete, interactive user experience without requiring a server.
 
 ## Features
 
@@ -16,7 +16,7 @@ The application is built as a multi-purpose assistant with several key modules:
 ### 2. User & API Key Management
 - **User Profile:** A dedicated page for users to view their details and an AI-generated bio.
 - **AI Bio Generation:** Integrates with the Gemini API (mocked) to generate a creative user bio based on their email.
-- **Secure API Key Storage:** Add, manage, and store API keys (e.g., for OpenAI/Gemini). Keys are masked in the UI and mock-encrypted in local storage.
+- **Secure API Key Storage:** Add, manage, and store API keys (e.g., for OpenAI/Gemini). Keys are masked in the UI and mock-encrypted in the database.
 - **Key Rotation & Testing:** Set an "active" key for use across the application, test its validity, and delete old keys.
 
 ### 3. Usage Dashboard
@@ -46,12 +46,12 @@ This application is built entirely with frontend technologies, demonstrating a m
 - **State Management:** React Context API for global state (e.g., authentication).
 - **Forms:** [React Hook Form](https://react-hook-form.com/) for robust and performant form validation.
 - **AI Integration:** Google Gemini API (`@google/genai`), mocked to run without a real API key.
-- **Backend Simulation:** All application data (users, sessions, API keys, database connections) is persisted in the browser's `localStorage`, effectively creating a mock backend.
+- **Browser-side Database:** [sql.js](https://sql.js.org/) (SQLite compiled to WebAssembly) for a complete in-browser relational database.
 
-## How It Works: The Mock Backend
+## How It Works: The In-Browser Backend
 
-This application is designed to be a self-contained demo. It does not have a traditional server or database.
+This application is designed to be a self-contained demo. It does not have a traditional server.
 
-- **Data Persistence:** All user data, including "encrypted" credentials, is stored in your browser's `localStorage`. This means your data will persist if you refresh the page but will be isolated to your current browser.
-- **Simulated Security:** Features like password hashing and credential encryption are **simulated** using basic client-side functions. **This is for demonstration purposes only and is not secure for a production environment.**
-- **Mock API Calls:** All external network requests (like authenticating, testing connections, or calling the Gemini API) are simulated using `setTimeout` to mimic network latency. The services return mock data, allowing the full UI and application logic to be tested without needing live credentials or backend infrastructure.
+- **Data Persistence:** All application data (users, API keys, database connections) is stored in a single SQLite database file. This file is converted to a Base64 string and saved in your browser's `localStorage`. This means your data will persist if you refresh the page but will be isolated to your current browser.
+- **Simulated Security:** Features like password and credential encryption are **simulated** using basic client-side functions. **This is for demonstration purposes only and is not secure for a production environment.**
+- **Mock API Calls:** All external network requests (like testing connections or calling the Gemini API) are simulated using `setTimeout` to mimic network latency. The services return mock data, allowing the full UI and application logic to be tested without needing live credentials or backend infrastructure.

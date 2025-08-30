@@ -29,8 +29,8 @@ const SettingsPage: React.FC = () => {
     setIsLoading(true);
     setServerError('');
     try {
-      const newKey = await apiKeyService.addApiKey(data.keyName, data.apiKey);
-      const updatedKeys = [...keys, newKey];
+      // Fix: `addApiKey` returns the full updated list of keys. Use it directly.
+      const updatedKeys = await apiKeyService.addApiKey(data.keyName, data.apiKey);
       setKeys(updatedKeys);
       updateUser({ apiKeys: updatedKeys });
       reset();
@@ -51,8 +51,8 @@ const SettingsPage: React.FC = () => {
 
   const handleDeleteKey = async (keyId: string) => {
     if (window.confirm('Are you sure you want to delete this key? This action cannot be undone.')) {
-      await apiKeyService.deleteApiKey(keyId);
-      const updatedKeys = keys.filter(k => k.id !== keyId);
+      // Fix: Use the updated list of keys returned from the service to ensure state consistency.
+      const updatedKeys = await apiKeyService.deleteApiKey(keyId);
       setKeys(updatedKeys);
       updateUser({ apiKeys: updatedKeys });
     }

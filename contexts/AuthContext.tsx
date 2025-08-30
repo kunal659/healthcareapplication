@@ -1,7 +1,8 @@
-
 import React, { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { User } from '../types';
 import * as authService from '../services/authService';
+import { initializeDatabase } from '../services/sqliteService';
+import Spinner from '../components/Spinner';
 
 interface AuthContextType {
   user: User | null;
@@ -21,19 +22,37 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDbInitialized, setIsDbInitialized] = useState(false);
+
+  useEffect(() => {
+    async function initDb() {
+      try {
+        await initializeDatabase();
+        setIsDbInitialized(true);
+      } catch (e) {
+        console.error("Failed to initialize database", e);
+      }
+    }
+    initDb();
+  }, []);
 
   const checkUserSession = useCallback(async () => {
+    if (!isDbInitialized) return;
     try {
       const currentUser = await authService.getCurrentUser();
       if (currentUser) {
-        setUser(currentUser);
+        const fullUser = await authService.getUserByEmail(currentUser.email);
+        setUser(fullUser);
       }
     } catch (error) {
-      console.error('No active session found');
+      console.error('No active session found', error);
+      // Clear session if user lookup fails
+      await authService.logout();
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isDbInitialized]);
 
   useEffect(() => {
     checkUserSession();
@@ -45,11 +64,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const register = async (email: string, password: string) => {
-    const newUser = await authService.register(email, password);
-    // In a real app, you might not log them in immediately,
-    // but redirect to a "please verify your email" page.
-    // For this demo, we'll log them in.
-    setUser(newUser);
+    await authService.register(email, password);
   };
   
   const logout = async () => {
@@ -58,16 +73,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const updateUser = (userData: Partial<User>) => {
-    if (user) {
-      const updatedUser = { ...user, ...userData };
-      setUser(updatedUser);
-      // Also update in our mock storage
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-    }
+    setUser(prevUser => {
+      if (!prevUser) return null;
+      const updatedUser = { ...prevUser, ...userData };
+      // Also update our session storage
+      localStorage.setItem('auth_session', JSON.stringify(updatedUser));
+      return updatedUser;
+    });
   };
 
+  if (!isDbInitialized || isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, isLoading: isLoading || !isDbInitialized, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

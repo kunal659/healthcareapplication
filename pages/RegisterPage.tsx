@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, Link } from 'react-router-dom';
@@ -11,7 +10,7 @@ const RegisterPage: React.FC = () => {
   const { register, handleSubmit, formState: { errors }, watch } = useForm();
   const [isLoading, setIsLoading] = useState(false);
   const [serverError, setServerError] = useState('');
-  const { register: registerUser } = useAuth();
+  const { register: registerUser, login } = useAuth();
   const navigate = useNavigate();
   const password = useRef({});
   password.current = watch("password", "");
@@ -21,9 +20,9 @@ const RegisterPage: React.FC = () => {
     setServerError('');
     try {
       await registerUser(data.email, data.password);
-      // In a real app, this would redirect to a "verify email" page.
-      // Here we simulate this by going to a generic verification page.
-      navigate('/verify-email/new-user');
+      // After successful registration, log the user in
+      await login(data.email, data.password);
+      navigate('/profile');
     } catch (error: any) {
       setServerError(error.message || 'An unexpected error occurred.');
     } finally {
@@ -58,7 +57,12 @@ const RegisterPage: React.FC = () => {
           id="password"
           label="Password"
           type="password"
-          {...register("password")}
+          {...register("password", { 
+                required: "Password is required",
+                minLength: { value: 8, message: "Password must have at least 8 characters" },
+          })}
+          error={errors.password?.message as string}
+
         />
             <Input
               id="confirmPassword"
