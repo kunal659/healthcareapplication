@@ -30,6 +30,9 @@ const Navbar: React.FC = () => {
                 <NavLink to="/dashboard" className={navLinkClasses}>
                   Dashboard
                 </NavLink>
+                <NavLink to="/databases" className={navLinkClasses}>
+                  Databases
+                </NavLink>
                 <NavLink to="/profile" className={navLinkClasses}>
                   Profile
                 </NavLink>

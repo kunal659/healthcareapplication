@@ -1,31 +1,9 @@
 
 import { User, ApiKey, UsageLog } from '../types';
+import { mockEncrypt, mockDecrypt } from './encryption';
 
-const KEYS_STORAGE_KEY_PREFIX = 'user_api_keys_';
 const LOGS_STORAGE_KEY_PREFIX = 'user_usage_logs_';
 const LOGGED_IN_USER_KEY = 'auth_session';
-
-// MOCK ENCRYPTION - DO NOT USE IN PRODUCTION
-// This is a simple XOR cipher for demonstration purposes.
-// In a real app, encryption should be handled server-side.
-const MOCK_SECRET = "a-very-secret-key";
-const mockEncrypt = (text: string): string => {
-  let result = '';
-  for (let i = 0; i < text.length; i++) {
-    result += String.fromCharCode(text.charCodeAt(i) ^ MOCK_SECRET.charCodeAt(i % MOCK_SECRET.length));
-  }
-  return btoa(result);
-};
-
-const mockDecrypt = (text: string): string => {
-  let result = '';
-  const decoded = atob(text);
-  for (let i = 0; i < decoded.length; i++) {
-    result += String.fromCharCode(decoded.charCodeAt(i) ^ MOCK_SECRET.charCodeAt(i % MOCK_SECRET.length));
-  }
-  return result;
-};
-
 
 // Helper to get the current logged-in user's data
 const getCurrentUser = (): User | null => {
@@ -41,7 +19,9 @@ const updateUserData = (updatedUser: User) => {
     // Update main user list
     const allUsers = JSON.parse(localStorage.getItem('auth_users') || '{}');
     if (allUsers[updatedUser.email]) {
-        allUsers[updatedUser.email] = { ...allUsers[updatedUser.email], ...updatedUser };
+        // Ensure we don't overwrite essential fields if they aren't on the partial update
+        const currentUserState = allUsers[updatedUser.email];
+        allUsers[updatedUser.email] = { ...currentUserState, ...updatedUser };
         localStorage.setItem('auth_users', JSON.stringify(allUsers));
     }
 }
@@ -60,8 +40,6 @@ export const addApiKey = async (name: string, key: string): Promise<ApiKey> => {
   const user = getCurrentUser();
   if (!user) throw new Error("No user logged in");
   
-  
-
   const currentKeys = await getApiKeys();
   if (currentKeys.some(k => k.key === key)) {
       throw new Error("This API key has already been added.");

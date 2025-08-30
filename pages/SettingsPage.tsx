@@ -127,7 +127,7 @@ const SettingsPage: React.FC = () => {
             type="password"
             {...register("apiKey", { 
               required: "API Key is required",
-              pattern: { value: /^sk-[a-zA-Z0-9]{48}$/, message: "Invalid OpenAI API key format." }
+              
             })}
             error={errors.apiKey?.message as string}
             placeholder="sk-..."

@@ -10,6 +10,23 @@ export interface ApiKey {
   usageCount: number;
 }
 
+export type DatabaseType = 'PostgreSQL' | 'MySQL' | 'SQL Server' | 'SQLite';
+export type ConnectionStatus = 'connected' | 'disconnected' | 'error' | 'connecting';
+
+export interface DatabaseConnection {
+  id: string;
+  name: string;
+  type: DatabaseType;
+  host?: string;
+  port?: number;
+  database?: string;
+  user?: string;
+  password?: string; // Encrypted
+  filePath?: string; // For SQLite
+  status: ConnectionStatus;
+}
+
+
 export interface User {
   id: string;
   email: string;
@@ -18,6 +35,7 @@ export interface User {
   bio?: string;
   apiKeys?: ApiKey[];
   monthlyBudget?: number;
+  databaseConnections?: DatabaseConnection[];
 }
 
 export interface UsageLog {

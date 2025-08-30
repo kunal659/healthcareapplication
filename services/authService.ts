@@ -50,6 +50,7 @@ export const register = async (email: string, password: string): Promise<User> =
     verificationToken: verificationToken,
     apiKeys: [], // Initialize with empty API keys
     monthlyBudget: 50, // Default budget
+    databaseConnections: [], // Initialize with empty connections
   };
 
   users[newUser.email] = newUser;
@@ -75,9 +76,15 @@ export const login = async (email: string, password: string): Promise<User> => {
   // Ensure apiKeys array exists for older mock users
   if (!user.apiKeys) {
     user.apiKeys = [];
-    users[lowerCaseEmail] = user;
-    saveMockUsers(users);
   }
+  // Ensure databaseConnections array exists for older mock users
+  if (!user.databaseConnections) {
+    user.databaseConnections = [];
+  }
+  
+  users[lowerCaseEmail] = user;
+  saveMockUsers(users);
+
 
   const publicUser = toPublicUser(user);
   localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(publicUser));

@@ -13,6 +13,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 import DashboardPage from './pages/DashboardPage';
 import SettingsPage from './pages/SettingsPage';
+import DatabasePage from './pages/DatabasePage';
 
 function App() {
   return (
@@ -48,6 +49,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <SettingsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/databases" 
+                element={
+                  <ProtectedRoute>
+                    <DatabasePage />
                   </ProtectedRoute>
                 } 
               />
