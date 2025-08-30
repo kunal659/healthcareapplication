@@ -1,23 +1,32 @@
-
 {
-  "name": "healthcare-assistant-backend",
+  "name": "healthcare-assistant",
+  "private": true,
   "version": "1.0.0",
-  "description": "Backend server for the Healthcare Assistant application to proxy database connections.",
-  "main": "server.js",
+  "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "start:backend": "node server.js"
   },
-  "keywords": [
-    "react",
-    "express",
-    "sql-server"
-  ],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
+    "@google/genai": "^1.16.0",
     "cors": "^2.8.5",
     "express": "^4.19.2",
-    "mssql": "^11.0.1"
+    "mssql": "^11.0.1",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-hook-form": "^7.62.0",
+    "react-router-dom": "^7.8.2",
+    "sql.js": "^1.10.3"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "typescript": "^5.2.2",
+    "vite": "^5.3.1"
   }
 }

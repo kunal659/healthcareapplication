@@ -1,10 +1,9 @@
-
 // Filename: server.js
 // This is a new file that acts as a secure backend bridge between the frontend and a live SQL Server database.
 
-const express = require('express');
-const cors = require('cors');
-const sql = require('mssql');
+import express from 'express';
+import cors from 'cors';
+import sql from 'mssql';
 
 const app = express();
 const port = 3001; // The port our backend server will run on

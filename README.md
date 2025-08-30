@@ -1,9 +1,47 @@
-
 # Healthcare Assistant
 
 Healthcare Assistant is a sophisticated, feature-rich web application that demonstrates a complete workflow for an AI-powered data analytics tool. It operates in two modes: a fully self-contained **frontend-only demo** using an in-browser SQLite database, and a powerful **live data mode** that connects to your local SQL Server, PostgreSQL, or MySQL databases via an included backend server.
 
 This hybrid approach makes it a versatile showcase of modern web development, allowing users to either explore its features in a sandboxed environment or connect it to their own data for a real-world experience.
+
+## Getting Started
+
+This application is composed of a **frontend** (the user interface in your browser) and an optional **backend** (a server to connect to live databases).
+
+### Prerequisites
+- [Node.js](https://nodejs.org/) (v18 or later) installed on your machine.
+- [npm](https://www.npmjs.com/) (which comes with Node.js).
+
+### Installation & Running the App
+
+The setup process is now streamlined with `npm`.
+
+**1. Install Dependencies**
+Open a terminal in the project's root directory and run the following command to install all required dependencies for both the frontend and backend.
+```bash
+npm install
+```
+
+**2. Run the Application**
+You will need two separate terminals to run the frontend and the optional backend simultaneously.
+
+**Terminal 1: Run the Frontend**
+In your first terminal, run the following command to start the Vite development server.
+```bash
+npm run dev
+```
+Vite will start the server and provide you with a local URL, typically **`http://localhost:5173`**. Open this URL in your web browser.
+
+---
+
+**Terminal 2: Run the Backend (Optional)**
+Run the backend server if you want to connect to a live SQL Server, MySQL, or PostgreSQL database on your local network.
+
+In your second terminal, from the project's root directory, run:
+```bash
+npm run start:backend
+```
+You should see a confirmation message: `Backend server listening at http://localhost:3001`. The frontend will automatically communicate with this server when you add or query a networked database.
 
 ## Features
 
@@ -45,6 +83,7 @@ The application is built as a multi-purpose assistant with several key modules:
 
 ### Frontend
 - **Framework/Library:** [React](https://reactjs.org/) (v19) with TypeScript
+- **Build Tool:** [Vite](https://vitejs.dev/)
 - **Styling:** [Tailwind CSS](https://tailwindcss.com/)
 - **Routing:** [React Router](https://reactrouter.com/)
 - **State Management:** React Context API
@@ -57,30 +96,6 @@ The application is built as a multi-purpose assistant with several key modules:
 - **Framework:** [Express](https://expressjs.com/)
 - **Database Driver:** [mssql](https://www.npmjs.com/package/mssql) for SQL Server connections.
 - **Middleware:** `cors` for enabling communication between the frontend and backend.
-
-## Getting Started
-
-This application can be run in two modes.
-
-### Mode 1: Frontend-Only Demo (Default)
-The application works out-of-the-box with no installation required. In this mode, all data is stored in your browser's `localStorage`. You can use all features, but for database connections, only the **SQLite (File Upload)** type will be fully interactive. Other database types will use a high-fidelity simulated connection.
-
-### Mode 2: Live Database Connection (Recommended)
-To connect to a live SQL Server, MySQL, or PostgreSQL database on your local network, you need to run the included backend server.
-
-**Prerequisites:**
-- [Node.js](https://nodejs.org/) (v18 or later) installed on your machine.
-
-**Backend Setup:**
-1.  **Install Dependencies:** Open a terminal in the project's root directory and run the following command. This will read the `package.json` file and install the required libraries (Express, mssql, etc.).
-    ```bash
-    npm install
-    ```
-2.  **Start the Server:** Run the following command to start the backend server.
-    ```bash
-    node server.js
-    ```
-3.  **Verify:** You should see a confirmation message in the terminal: `Backend server listening at http://localhost:3001`. The frontend will automatically communicate with this server when you add or query a networked database.
 
 ## Security Disclaimer
 This application is a **demonstration project** and is **not suitable for production use.**
