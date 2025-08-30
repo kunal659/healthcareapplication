@@ -69,6 +69,11 @@ export interface ChatMessageContent {
     sql?: string;
     results?: { headers: string[]; rows: any[][] };
     error?: string;
+    chartSuggestion?: {
+        chartType: 'pie' | 'bar';
+        labelsColumn: string;
+        dataColumn: string;
+    };
 }
 
 export interface ChatMessage {

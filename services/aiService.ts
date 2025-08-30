@@ -45,7 +45,7 @@ export const generateSqlFromNaturalLanguage = async (
   schema: TableSchema[],
   history: ChatMessage[],
   dbType: DatabaseType
-): Promise<{ textResponse: string; sql: string }> => {
+): Promise<{ textResponse: string; sql: string; chartSuggestion?: { chartType: 'pie' | 'bar', labelsColumn: string, dataColumn: string } }> => {
   console.log(`Generating SQL for: "${prompt}" for DB type: ${dbType}`);
   console.log("Using Schema:", schema);
 
@@ -73,26 +73,50 @@ export const generateSqlFromNaturalLanguage = async (
   
   let sql = "";
   let textResponse = "";
+  let chartSuggestion = undefined;
 
-  // Dynamic, schema-aware logic
   const tableNames = schema.map(t => t.tableName);
   const foundTable = tableNames.find(name => lowerPrompt.includes(name.toLowerCase().replace(/_/g, " ")));
 
   if (foundTable) {
       const tableSchema = schema.find(t => t.tableName === foundTable);
-      const columns = tableSchema ? tableSchema.columns.map(c => c.name).slice(0, 5).join(', ') : '*';
+      const isBarChartRequest = lowerPrompt.includes('by ') || lowerPrompt.includes('per ');
+      const isPieChartRequest = lowerPrompt.includes('breakdown') || lowerPrompt.includes('distribution');
 
-      if (lowerPrompt.includes("how many") || lowerPrompt.includes("count")) {
-          sql = `SELECT COUNT(*) AS total_count FROM ${foundTable};`;
-          textResponse = `Here's the query to count the total number of records in the ${foundTable} table.`;
-      } else {
-          // Dialect-aware SQL generation
-          if (dbType === 'SQL Server') {
-              sql = `SELECT TOP 10 ${columns} FROM ${foundTable};`;
-          } else { // For PostgreSQL, MySQL, SQLite
-              sql = `SELECT ${columns} FROM ${foundTable} LIMIT 10;`;
+      if (isBarChartRequest) {
+          const match = lowerPrompt.match(/by (\w+)/);
+          const groupByColumn = match?.[1] ? tableSchema?.columns.find(c => c.name.toLowerCase() === match[1])?.name : undefined;
+          
+          if (groupByColumn) {
+              const dataColumn = `${groupByColumn}_count`;
+              sql = `SELECT ${groupByColumn}, COUNT(*) AS ${dataColumn} FROM ${foundTable} GROUP BY ${groupByColumn} ORDER BY ${dataColumn} DESC;`;
+              textResponse = `Here's the query for the number of records in ${foundTable} grouped by ${groupByColumn}. I've also generated a bar chart to visualize it.`;
+              chartSuggestion = { chartType: 'bar', labelsColumn: groupByColumn, dataColumn: dataColumn };
           }
-          textResponse = `Sure, here is a list of the first 10 records from the ${foundTable} table.`;
+      } else if (isPieChartRequest) {
+           const categoricalColumn = tableSchema?.columns.find(c => ['varchar', 'char', 'text', 'boolean'].includes(c.type.toLowerCase()) && c.name.toLowerCase() !== 'id' && !c.name.toLowerCase().includes('name'))?.name;
+           if (categoricalColumn) {
+              const dataColumn = `count`;
+              sql = `SELECT ${categoricalColumn}, COUNT(*) as ${dataColumn} FROM ${foundTable} GROUP BY ${categoricalColumn};`;
+              textResponse = `Here is a breakdown of ${foundTable} by ${categoricalColumn}. I've visualized it with a pie chart.`;
+              chartSuggestion = { chartType: 'pie', labelsColumn: categoricalColumn, dataColumn: dataColumn };
+           }
+      }
+
+      // Fallback to simple query if no chart is generated
+      if (!sql) {
+          const columns = tableSchema ? tableSchema.columns.map(c => c.name).slice(0, 5).join(', ') : '*';
+          if (lowerPrompt.includes("how many") || lowerPrompt.includes("count")) {
+              sql = `SELECT COUNT(*) AS total_count FROM ${foundTable};`;
+              textResponse = `Here's the query to count the total number of records in the ${foundTable} table.`;
+          } else {
+              if (dbType === 'SQL Server') {
+                  sql = `SELECT TOP 10 ${columns} FROM ${foundTable};`;
+              } else {
+                  sql = `SELECT ${columns} FROM ${foundTable} LIMIT 10;`;
+              }
+              textResponse = `Sure, here is a list of the first 10 records from the ${foundTable} table.`;
+          }
       }
   } else {
       textResponse = "I'm sorry, I couldn't identify a specific table in your question. Please mention a table name like 'patients' or 'appointments' in your request.";
@@ -103,5 +127,5 @@ export const generateSqlFromNaturalLanguage = async (
     await logUsage(activeKey.id, 'generateSQL', 'Success');
   }
 
-  return { textResponse, sql };
+  return { textResponse, sql, chartSuggestion };
 };

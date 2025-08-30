@@ -2,6 +2,7 @@
 import React from 'react';
 import { ChatMessage } from '../types';
 import QueryResultTable from './QueryResultTable';
+import Chart from './Chart';
 
 interface ChatMessageProps {
   message: ChatMessage;
@@ -28,9 +29,9 @@ const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message }) => {
   return (
     <div className={`flex items-start gap-3 ${containerClasses}`}>
       {!isUser && <span className="text-2xl mt-1">{avatar}</span>}
-      <div className="flex flex-col max-w-2xl">
+      <div className="flex flex-col max-w-2xl w-full">
         {content.text && (
-            <div className={`px-4 py-2 rounded-xl ${bubbleClasses} mb-2`}>
+            <div className={`px-4 py-2 rounded-xl ${bubbleClasses} mb-2 self-start`}>
                 <p>{formatText(content.text)}</p>
             </div>
         )}
@@ -41,6 +42,12 @@ const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message }) => {
             </div>
         )}
         
+        {content.chartSuggestion && content.results && content.results.rows.length > 0 && (
+             <div className="w-full p-4 rounded-lg border dark:border-gray-700 bg-white dark:bg-gray-800 mb-2">
+                <Chart suggestion={content.chartSuggestion} results={content.results} />
+            </div>
+        )}
+
         {content.results && (
             <div className="w-full overflow-hidden rounded-lg border dark:border-gray-700 mb-2">
                 <QueryResultTable headers={content.results.headers} rows={content.results.rows} />

@@ -60,36 +60,39 @@ const SqlChatPage: React.FC = () => {
         setIsLoading(true);
 
         try {
-            // 1. Generate SQL from AI
             if (!selectedDb.schema) {
                 throw new Error("Selected database has no schema information.");
             }
-            const { textResponse, sql } = await aiService.generateSqlFromNaturalLanguage(
+            
+            // 1. Generate SQL and chart suggestion from AI
+            const { textResponse, sql, chartSuggestion } = await aiService.generateSqlFromNaturalLanguage(
                 input, 
                 selectedDb.schema,
                 messages,
-                selectedDb.type // Pass the database type for dialect-aware SQL generation
+                selectedDb.type
             );
             
-            const aiSqlMessage: ChatMessage = {
+            // 2. Execute SQL query if one was generated
+            let results = undefined;
+            if (sql && !sql.startsWith('--')) {
+                results = await dbService.executeQuery(sql, selectedDb);
+            }
+            
+            // 3. Create a single, consolidated AI response message
+            const aiResponseMessage: ChatMessage = {
                 id: `msg_${Date.now() + 1}`,
                 sender: 'ai',
-                content: { text: textResponse, sql: sql },
+                content: {
+                    text: textResponse,
+                    sql: sql,
+                    results: results,
+                    // Only include chart suggestion if there are results to display
+                    chartSuggestion: (results && results.rows.length > 0) ? chartSuggestion : undefined
+                },
                 timestamp: new Date().toISOString()
             };
-            setMessages(prev => [...prev, aiSqlMessage]);
+            setMessages(prev => [...prev, aiResponseMessage]);
 
-            // 2. Execute SQL query
-            if (sql && !sql.startsWith('--')) {
-                const results = await dbService.executeQuery(sql, selectedDb);
-                const aiResultMessage: ChatMessage = {
-                    id: `msg_${Date.now() + 2}`,
-                    sender: 'ai',
-                    content: { results: results },
-                    timestamp: new Date().toISOString()
-                };
-                 setMessages(prev => [...prev, aiResultMessage]);
-            }
         } catch (error: any) {
             const errorMessage: ChatMessage = {
                 id: `msg_${Date.now() + 1}`,
