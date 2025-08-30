@@ -1,6 +1,6 @@
 import { getActiveApiKey, logUsage } from './apiKeyService';
 import { getRules } from './governanceService';
-import { ChatMessage, TableSchema } from "../types";
+import { ChatMessage, TableSchema, DatabaseType } from "../types";
 
 /**
  * Generates a short, creative bio for a user based on their email.
@@ -38,14 +38,15 @@ export const generateText = async (email: string): Promise<string> => {
 
 /**
  * MOCK: Generates a SQL query from natural language.
- * This version is now schema-aware and more dynamic.
+ * This version is now schema-aware and dialect-aware.
  */
 export const generateSqlFromNaturalLanguage = async (
   prompt: string,
   schema: TableSchema[],
-  history: ChatMessage[]
+  history: ChatMessage[],
+  dbType: DatabaseType
 ): Promise<{ textResponse: string; sql: string }> => {
-  console.log("Generating SQL for:", prompt);
+  console.log(`Generating SQL for: "${prompt}" for DB type: ${dbType}`);
   console.log("Using Schema:", schema);
 
   const activeKey = await getActiveApiKey();
@@ -85,7 +86,12 @@ export const generateSqlFromNaturalLanguage = async (
           sql = `SELECT COUNT(*) AS total_count FROM ${foundTable};`;
           textResponse = `Here's the query to count the total number of records in the ${foundTable} table.`;
       } else {
-          sql = `SELECT ${columns} FROM ${foundTable} LIMIT 10;`;
+          // Dialect-aware SQL generation
+          if (dbType === 'SQL Server') {
+              sql = `SELECT TOP 10 ${columns} FROM ${foundTable};`;
+          } else { // For PostgreSQL, MySQL, SQLite
+              sql = `SELECT ${columns} FROM ${foundTable} LIMIT 10;`;
+          }
           textResponse = `Sure, here is a list of the first 10 records from the ${foundTable} table.`;
       }
   } else {

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import * as dbService from '../services/databaseService';
@@ -68,7 +67,8 @@ const SqlChatPage: React.FC = () => {
             const { textResponse, sql } = await aiService.generateSqlFromNaturalLanguage(
                 input, 
                 selectedDb.schema,
-                messages
+                messages,
+                selectedDb.type // Pass the database type for dialect-aware SQL generation
             );
             
             const aiSqlMessage: ChatMessage = {
