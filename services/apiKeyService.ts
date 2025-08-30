@@ -60,9 +60,7 @@ export const addApiKey = async (name: string, key: string): Promise<ApiKey> => {
   const user = getCurrentUser();
   if (!user) throw new Error("No user logged in");
   
-  if (!/^sk-[a-zA-Z0-9]{48}$/.test(key)) {
-    throw new Error("Invalid OpenAI API key format.");
-  }
+  
 
   const currentKeys = await getApiKeys();
   if (currentKeys.some(k => k.key === key)) {
