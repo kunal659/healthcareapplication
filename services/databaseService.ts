@@ -3,6 +3,7 @@ import { User, DatabaseConnection, TableSchema } from '../types';
 import { mockEncrypt, mockDecrypt } from './encryption';
 import { getDb, saveDatabase } from './sqliteService';
 import { getCurrentUser } from './authService';
+import { databaseConnector } from './realDatabaseService';
 
 const fromDbToConnection = (dbObj: any): DatabaseConnection => {
     return {
@@ -128,26 +129,13 @@ export const deleteConnection = async (id: string): Promise<DatabaseConnection[]
 };
 
 export const testConnection = async (connectionData: Partial<DatabaseConnection>): Promise<string[]> => {
-    await new Promise(res => setTimeout(res, 1000)); // Simulate network delay
-    
-    if (connectionData.password?.toLowerCase().includes('fail')) {
-        throw new Error("Invalid credentials provided.");
+    try {
+        await databaseConnector.connect(connectionData as DatabaseConnection);
+        await databaseConnector.disconnect(connectionData.id as string);
+        return [connectionData.database || ''];
+    } catch (error: any) {
+        throw new Error(`Connection test failed: ${error.message}`);
     }
-    if (connectionData.host?.toLowerCase().includes('invalid')) {
-        throw new Error("Hostname could not be resolved.");
-    }
-    
-    // On success, dynamically generate a list of mock databases
-    // to make the simulation more realistic by including the user's input.
-    const mockDatabases = new Set(['master', 'tempdb', 'model']);
-    if (connectionData.database) {
-        mockDatabases.add(connectionData.database);
-    } else {
-        // Add a default if the user didn't specify one
-        mockDatabases.add('OMOP1_mock');
-    }
-    
-    return Array.from(mockDatabases);
 };
 
 // Mock function to simulate checking connection statuses
@@ -198,35 +186,17 @@ const mockAppointmentData = [
 ];
 
 export const executeQuery = async (sql: string, connection: DatabaseConnection): Promise<{ headers: string[], rows: any[][] }> => {
-    await new Promise(res => setTimeout(res, 800)); // Simulate query execution time
-    
+    // For safety, only allow SELECT queries
     if (sql.toLowerCase().includes('delete') || sql.toLowerCase().includes('update') || sql.toLowerCase().includes('insert')) {
-        throw new Error("For safety, only SELECT queries can be executed in this demo.");
+        throw new Error("For safety, only SELECT queries can be executed.");
     }
 
-    const patientData = connection.database === 'OMOP2' ? mockPatientDataOMOP2 : mockPatientDataOMOP1;
-
-    if (sql.toLowerCase().includes('patients')) {
-        if (sql.toLowerCase().includes('count')) {
-            return { headers: ['total_patients'], rows: [[patientData.length]] };
-        }
-        if (patientData.length === 0) {
-             return { headers: ['id', 'first_name', 'last_name', 'date_of_birth', 'gender'], rows: [] };
-        }
-        const headers = Object.keys(patientData[0]);
-        const rows = patientData.map(p => Object.values(p));
-        return { headers, rows };
+    try {
+        await databaseConnector.connect(connection);
+        const result = await databaseConnector.executeQuery(sql, connection);
+        await databaseConnector.disconnect(connection.id);
+        return result;
+    } catch (error: any) {
+        throw new Error(`Query execution failed: ${error.message}`);
     }
-    
-    if (sql.toLowerCase().includes('appointments')) {
-         // Only OMOP1 has appointment data in this mock
-         if (connection.database !== 'OMOP1') {
-             return { headers: ['id', 'patient_id', 'appointment_date', 'reason'], rows: [] };
-         }
-        const headers = Object.keys(mockAppointmentData[0]);
-        const rows = mockAppointmentData.map(p => Object.values(p));
-        return { headers, rows };
-    }
-
-    throw new Error(`Query execution failed. The mock database '${connection.database}' only contains 'patients' and 'appointments' tables.`);
 };
