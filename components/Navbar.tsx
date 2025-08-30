@@ -3,6 +3,7 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import Button from './Button';
+import Logo from './Logo';
 
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -21,8 +22,9 @@ const Navbar: React.FC = () => {
     <nav className="bg-white dark:bg-gray-800 shadow-md">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center py-4">
-          <NavLink to="/" className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-            Healthcare Assistant
+          <NavLink to="/" className="flex items-center gap-3 text-2xl font-bold text-primary-600 dark:text-primary-400">
+            <Logo className="h-8 w-8" />
+            <span>Healthcare Assistant</span>
           </NavLink>
           <div className="flex items-center space-x-2">
             {user ? (
