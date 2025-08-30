@@ -1,3 +1,4 @@
+
 import { User } from '../types';
 import { getDb, saveDatabase } from './sqliteService';
 
@@ -11,6 +12,7 @@ const toPublicUser = (user: any): User => {
         isVerified: !!publicUser.isVerified,
         apiKeys: publicUser.apiKeys ? (typeof publicUser.apiKeys === 'string' ? JSON.parse(publicUser.apiKeys) : publicUser.apiKeys) : [],
         databaseConnections: publicUser.databaseConnections ? (typeof publicUser.databaseConnections === 'string' ? JSON.parse(publicUser.databaseConnections) : publicUser.databaseConnections) : [],
+        governanceRules: publicUser.governanceRules ? (typeof publicUser.governanceRules === 'string' ? JSON.parse(publicUser.governanceRules) : publicUser.governanceRules) : [],
     };
 };
 
@@ -95,9 +97,14 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
     // Fetch associated data
     const apiKeysQuery = db.exec("SELECT * FROM api_keys WHERE user_id = ?", [userObj.id]);
     const dbConnectionsQuery = db.exec("SELECT * FROM database_connections WHERE user_id = ?", [userObj.id]);
+    const governanceRulesQuery = db.exec("SELECT * FROM governance_rules WHERE user_id = ?", [userObj.id]);
     
     userObj.apiKeys = apiKeysQuery.length > 0 ? apiKeysQuery[0].values.map(row => Object.fromEntries(apiKeysQuery[0].columns.map((col, i) => [col, row[i]]))) : [];
     userObj.databaseConnections = dbConnectionsQuery.length > 0 ? dbConnectionsQuery[0].values.map(row => Object.fromEntries(dbConnectionsQuery[0].columns.map((col, i) => [col, row[i]]))) : [];
+    userObj.governanceRules = governanceRulesQuery.length > 0 ? governanceRulesQuery[0].values.map(row => {
+        const ruleObj = Object.fromEntries(governanceRulesQuery[0].columns.map((col, i) => [col, row[i]]));
+        return { ...ruleObj, isActive: !!ruleObj.isActive };
+    }) : [];
 
     return toPublicUser(userObj);
 };

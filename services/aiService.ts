@@ -1,4 +1,6 @@
+
 import { getActiveApiKey, logUsage } from './apiKeyService';
+import { getRules } from './governanceService';
 import { ChatMessage, TableSchema } from "../types";
 
 /**
@@ -55,10 +57,24 @@ export const generateSqlFromNaturalLanguage = async (
   if (activeKey.key.includes('FAIL')) {
       throw new Error("Simulated API key failure.");
   }
+  
+  // --- Governance Check ---
+  const rules = await getRules();
+  const activeRules = rules.filter(r => r.isActive);
+  const lowerPrompt = prompt.toLowerCase();
+
+  for (const rule of activeRules) {
+      // This is a very simplistic mock check. A real implementation would involve more sophisticated NLP.
+      const ruleKeywords = rule.rule.toLowerCase().match(/\b(\w+)\b/g) || [];
+      const promptViolates = ruleKeywords.every(kw => lowerPrompt.includes(kw));
+
+      if (promptViolates) {
+          throw new Error(`Query blocked by data governance rule: "${rule.rule}"`);
+      }
+  }
 
   // Mocking the AI's logic with simple keyword matching
   await new Promise(res => setTimeout(res, 1500)); // Simulate AI thinking time
-  const lowerPrompt = prompt.toLowerCase();
   
   let sql = "";
   let textResponse = "";

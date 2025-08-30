@@ -1,3 +1,4 @@
+
 import initSqlJs, { Database } from 'sql.js';
 
 let db: Database | null = null;
@@ -75,6 +76,14 @@ const createDatabase = (SQL: any) => {
             filePath TEXT,
             status TEXT,
             schema TEXT,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        );
+
+        CREATE TABLE governance_rules (
+            id TEXT PRIMARY KEY,
+            user_id TEXT,
+            rule TEXT,
+            isActive INTEGER,
             FOREIGN KEY(user_id) REFERENCES users(id)
         );
     `;

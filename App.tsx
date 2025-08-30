@@ -15,6 +15,7 @@ import DashboardPage from './pages/DashboardPage';
 import SettingsPage from './pages/SettingsPage';
 import DatabasePage from './pages/DatabasePage';
 import SqlChatPage from './pages/SqlChatPage';
+import GovernancePage from './pages/GovernancePage';
 
 function App() {
   return (
@@ -66,6 +67,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <SqlChatPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/governance" 
+                element={
+                  <ProtectedRoute>
+                    <GovernancePage />
                   </ProtectedRoute>
                 } 
               />

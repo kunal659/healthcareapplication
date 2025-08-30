@@ -35,6 +35,11 @@ export interface DatabaseConnection {
   schema?: TableSchema[];
 }
 
+export interface GovernanceRule {
+  id: string;
+  rule: string;
+  isActive: boolean;
+}
 
 export interface User {
   id: string;
@@ -45,6 +50,7 @@ export interface User {
   apiKeys?: ApiKey[];
   monthlyBudget?: number;
   databaseConnections?: DatabaseConnection[];
+  governanceRules?: GovernanceRule[];
 }
 
 export interface UsageLog {
