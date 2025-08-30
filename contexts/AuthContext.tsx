@@ -76,7 +76,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(prevUser => {
       if (!prevUser) return null;
       const updatedUser = { ...prevUser, ...userData };
-      // Also update our session storage
+      
+      // Persist changes to the user object (e.g., bio, budget) to the database
+      authService.updateUserInDb(updatedUser);
+
+      // Also update our session storage for the current session
       localStorage.setItem('auth_session', JSON.stringify(updatedUser));
       return updatedUser;
     });

@@ -28,9 +28,8 @@ const DatabasePage: React.FC = () => {
       if (connections.length > 0) {
         const updatedConnections = await dbService.checkConnectionsStatus(connections);
         setConnections(updatedConnections);
-        if (user) {
-          updateUser({ ...user, databaseConnections: updatedConnections });
-        }
+        // FIX: Only pass the delta to prevent overwriting the user object with stale data.
+        updateUser({ databaseConnections: updatedConnections });
       }
     };
 
@@ -62,9 +61,8 @@ const DatabasePage: React.FC = () => {
         updatedConnections = await dbService.addConnection(data);
       }
       setConnections(updatedConnections);
-      if (user) {
-        updateUser({ ...user, databaseConnections: updatedConnections });
-      }
+      // FIX: Only pass the delta to prevent overwriting the user object with stale data.
+      updateUser({ databaseConnections: updatedConnections });
       handleCloseModal();
     } catch (error) {
       console.error("Failed to save connection:", error);
@@ -79,9 +77,8 @@ const DatabasePage: React.FC = () => {
       try {
         const updatedConnections = await dbService.deleteConnection(id);
         setConnections(updatedConnections);
-        if (user) {
-          updateUser({ ...user, databaseConnections: updatedConnections });
-        }
+        // FIX: Only pass the delta to prevent overwriting the user object with stale data.
+        updateUser({ databaseConnections: updatedConnections });
       } catch (error) {
         console.error("Failed to delete connection:", error);
         alert("Error: Could not delete the connection.");
