@@ -56,6 +56,51 @@ app.post('/api/test-connection', async (req, res) => {
   }
 });
 
+// --- API Endpoint to Fetch Database Schema ---
+app.post('/api/schema', async (req, res) => {
+    const { connectionDetails } = req.body;
+    try {
+        const config = buildDbConfig(connectionDetails);
+        console.log(`[Schema] Attempting connection to ${config.server}/${config.database}...`);
+        await sql.connect(config);
+
+        const query = `
+            SELECT
+                t.TABLE_NAME,
+                c.COLUMN_NAME,
+                c.DATA_TYPE
+            FROM
+                INFORMATION_SCHEMA.TABLES t
+            JOIN
+                INFORMATION_SCHEMA.COLUMNS c ON t.TABLE_NAME = c.TABLE_NAME AND t.TABLE_SCHEMA = c.TABLE_SCHEMA
+            WHERE
+                t.TABLE_TYPE = 'BASE TABLE'
+            ORDER BY
+                t.TABLE_NAME, c.ORDINAL_POSITION;
+        `;
+        const result = await sql.query(query);
+        await sql.close();
+
+        // Group columns by table name
+        const schemaMap = new Map();
+        result.recordset.forEach(row => {
+            if (!schemaMap.has(row.TABLE_NAME)) {
+                schemaMap.set(row.TABLE_NAME, { tableName: row.TABLE_NAME, columns: [] });
+            }
+            schemaMap.get(row.TABLE_NAME).columns.push({ name: row.COLUMN_NAME, type: row.DATA_TYPE });
+        });
+        
+        const schema = Array.from(schemaMap.values());
+        console.log(`[Schema] Schema fetched successfully for ${config.database}.`);
+        res.json({ schema });
+
+    } catch (err) {
+        console.error('[Schema] SQL Server schema fetch error:', err.message);
+        res.status(500).json({ error: 'Failed to fetch schema.', details: err.message });
+    }
+});
+
+
 // --- API Endpoint to Execute a SQL Query ---
 app.post('/api/query', async (req, res) => {
   const { connectionDetails, query } = req.body;

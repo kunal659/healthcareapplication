@@ -1,4 +1,3 @@
-
 import { getActiveApiKey, logUsage } from './apiKeyService';
 import { getRules } from './governanceService';
 import { ChatMessage, TableSchema } from "../types";
@@ -39,7 +38,7 @@ export const generateText = async (email: string): Promise<string> => {
 
 /**
  * MOCK: Generates a SQL query from natural language.
- * In a real app, this would make a call to a powerful LLM like Gemini.
+ * This version is now schema-aware and more dynamic.
  */
 export const generateSqlFromNaturalLanguage = async (
   prompt: string,
@@ -47,8 +46,7 @@ export const generateSqlFromNaturalLanguage = async (
   history: ChatMessage[]
 ): Promise<{ textResponse: string; sql: string }> => {
   console.log("Generating SQL for:", prompt);
-  console.log("Schema:", schema);
-  console.log("History:", history);
+  console.log("Using Schema:", schema);
 
   const activeKey = await getActiveApiKey();
   if (!activeKey) {
@@ -64,48 +62,35 @@ export const generateSqlFromNaturalLanguage = async (
   const lowerPrompt = prompt.toLowerCase();
 
   for (const rule of activeRules) {
-      // This is a very simplistic mock check. A real implementation would involve more sophisticated NLP.
       const ruleKeywords = rule.rule.toLowerCase().match(/\b(\w+)\b/g) || [];
-      const promptViolates = ruleKeywords.every(kw => lowerPrompt.includes(kw));
-
-      if (promptViolates) {
+      if (ruleKeywords.length > 0 && ruleKeywords.every(kw => lowerPrompt.includes(kw))) {
           throw new Error(`Query blocked by data governance rule: "${rule.rule}"`);
       }
   }
 
-  // Mocking the AI's logic with simple keyword matching
   await new Promise(res => setTimeout(res, 1500)); // Simulate AI thinking time
   
   let sql = "";
   let textResponse = "";
 
-  if (lowerPrompt.includes("patient") || lowerPrompt.includes("patients")) {
-    if (lowerPrompt.includes("how many") || lowerPrompt.includes("count")) {
-      sql = "SELECT COUNT(*) AS total_patients FROM patients;";
-      textResponse = "Here's the query to count the total number of patients.";
-    } else if (lowerPrompt.includes("list") || lowerPrompt.includes("show me") || lowerPrompt.includes("who are")) {
-      sql = "SELECT id, first_name, last_name, date_of_birth, gender FROM patients LIMIT 10;";
-      textResponse = "Here is a list of the first 10 patients in the database.";
-    } else if (lowerPrompt.match(/id (\d+)/)) {
-        const match = lowerPrompt.match(/id (\d+)/);
-        const id = match ? match[1] : '1';
-        sql = `SELECT * FROM patients WHERE id = ${id};`;
-        textResponse = `Sure, here is the information for patient ID ${id}.`;
-    } else {
-        sql = "SELECT id, first_name, last_name FROM patients LIMIT 5;";
-        textResponse = "I'm not sure I fully understand, but here's a query for the first 5 patients.";
-    }
-  } else if (lowerPrompt.includes("appointment") || lowerPrompt.includes("appointments")) {
-     if (lowerPrompt.includes("upcoming") || lowerPrompt.includes("next")) {
-        sql = "SELECT a.id, p.first_name, p.last_name, a.appointment_date, a.reason FROM appointments a JOIN patients p ON a.patient_id = p.id WHERE a.appointment_date >= CURRENT_DATE ORDER BY a.appointment_date ASC LIMIT 5;";
-        textResponse = "Here are the next 5 upcoming appointments.";
-     } else {
-        sql = "SELECT id, patient_id, appointment_date, reason FROM appointments ORDER BY appointment_date DESC LIMIT 5;";
-        textResponse = "Here are the 5 most recent appointments.";
-     }
+  // Dynamic, schema-aware logic
+  const tableNames = schema.map(t => t.tableName);
+  const foundTable = tableNames.find(name => lowerPrompt.includes(name.toLowerCase().replace(/_/g, " ")));
+
+  if (foundTable) {
+      const tableSchema = schema.find(t => t.tableName === foundTable);
+      const columns = tableSchema ? tableSchema.columns.map(c => c.name).slice(0, 5).join(', ') : '*';
+
+      if (lowerPrompt.includes("how many") || lowerPrompt.includes("count")) {
+          sql = `SELECT COUNT(*) AS total_count FROM ${foundTable};`;
+          textResponse = `Here's the query to count the total number of records in the ${foundTable} table.`;
+      } else {
+          sql = `SELECT ${columns} FROM ${foundTable} LIMIT 10;`;
+          textResponse = `Sure, here is a list of the first 10 records from the ${foundTable} table.`;
+      }
   } else {
-    textResponse = "I'm sorry, I can only answer questions about 'patients' and 'appointments'. Could you please rephrase your question?";
-    sql = "-- No query generated. Please ask about patients or appointments.";
+      textResponse = "I'm sorry, I couldn't identify a specific table in your question. Please mention a table name like 'patients' or 'appointments' in your request.";
+      sql = `-- No query generated. Please specify a table from the schema. Available tables: ${tableNames.join(', ')}`;
   }
 
   if (activeKey) {

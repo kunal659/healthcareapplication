@@ -1,4 +1,3 @@
-
 import { DatabaseConnection, TableSchema } from '../types';
 import { mockEncrypt, mockDecrypt } from './encryption';
 import { getDb, saveDatabase } from './sqliteService';
@@ -56,7 +55,7 @@ export const addConnection = async (connectionData: Omit<DatabaseConnection, 'id
         await testConnection(connectionData);
         status = 'connected';
         if (connectionData.type !== 'SQLite') {
-           // schema = await fetchSchemaFromBackend(connectionData);
+           schema = await fetchSchemaFromBackend(connectionData);
         }
     } catch (e) {
         console.warn("Initial connection test failed, saving as disconnected.", e);
@@ -90,16 +89,20 @@ export const updateConnection = async (connectionData: DatabaseConnection): Prom
     const db = await getDb();
     
     let status: 'connected' | 'disconnected' | 'error' = connectionData.status as any;
+    let schema: TableSchema[] = connectionData.schema || [];
     try {
         await testConnection(connectionData);
         status = 'connected';
+        if (connectionData.type !== 'SQLite') {
+            schema = await fetchSchemaFromBackend(connectionData);
+        }
     } catch (e) {
         console.warn("Connection test failed during update, saving as disconnected.", e);
         status = 'disconnected';
     }
 
     db.run(
-        `UPDATE database_connections SET name = ?, type = ?, host = ?, port = ?, database = ?, user = ?, password = ?, filePath = ?, dbFileContent = ?, status = ?
+        `UPDATE database_connections SET name = ?, type = ?, host = ?, port = ?, database = ?, user = ?, password = ?, filePath = ?, dbFileContent = ?, status = ?, schema = ?
          WHERE id = ? AND user_id = ?`,
         [
             connectionData.name, connectionData.type,
@@ -111,6 +114,7 @@ export const updateConnection = async (connectionData: DatabaseConnection): Prom
             connectionData.filePath ?? null,
             connectionData.dbFileContent ?? null,
             status,
+            JSON.stringify(schema),
             connectionData.id, user.id
         ]
     );
