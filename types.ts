@@ -30,7 +30,8 @@ export interface DatabaseConnection {
   database?: string;
   user?: string;
   password?: string; // Encrypted
-  filePath?: string; // For SQLite
+  filePath?: string; // For SQLite path (legacy/display)
+  dbFileContent?: string; // For uploaded SQLite file content (base64)
   status: ConnectionStatus;
   schema?: TableSchema[];
 }

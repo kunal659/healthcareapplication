@@ -1,3 +1,4 @@
+
 # Healthcare Assistant
 
 Healthcare Assistant is a sophisticated, feature-rich web application that demonstrates a complete workflow for an AI-powered data analytics tool. It operates in two modes: a fully self-contained **frontend-only demo** using an in-browser SQLite database, and a powerful **live data mode** that connects to your local SQL Server, PostgreSQL, or MySQL databases via an included backend server.

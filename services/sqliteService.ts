@@ -74,6 +74,7 @@ const createDatabase = (SQL: any) => {
             user TEXT,
             password TEXT,
             filePath TEXT,
+            dbFileContent TEXT,
             status TEXT,
             schema TEXT,
             FOREIGN KEY(user_id) REFERENCES users(id)
