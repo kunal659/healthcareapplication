@@ -61,13 +61,21 @@ export const generateSqlFromNaturalLanguage = async (
   const rules = await getRules();
   const activeRules = rules.filter(r => r.isActive);
   const lowerPrompt = prompt.toLowerCase();
+  
+  // Define common words to ignore in rules to get to the core intent
+  const STOP_WORDS = new Set(['a', 'an', 'the', 'on', 'in', 'for', 'with', 'of', 'to', 'block', 'query', 'queries', 'access', 'show', 'never', 'table', 'tables', 'column', 'columns', 'data']);
 
   for (const rule of activeRules) {
+      // Tokenize the rule, filter out stop words to find the meaningful keywords
       const ruleKeywords = rule.rule.toLowerCase().match(/\b(\w+)\b/g) || [];
-      if (ruleKeywords.length > 0 && ruleKeywords.every(kw => lowerPrompt.includes(kw))) {
+      const meaningfulKeywords = ruleKeywords.filter(kw => !STOP_WORDS.has(kw));
+
+      // If all the meaningful keywords from the rule are present in the user's prompt, block the query.
+      if (meaningfulKeywords.length > 0 && meaningfulKeywords.every(kw => lowerPrompt.includes(kw))) {
           throw new Error(`Query blocked by data governance rule: "${rule.rule}"`);
       }
   }
+
 
   await new Promise(res => setTimeout(res, 1500)); // Simulate AI thinking time
   
