@@ -1,0 +1,5 @@
+{
+  "name": "Healthcare Assistant",
+  "description": "A Healthcare Assistant application providing secure user authentication for managing patient and provider data. Features include registration, login, and profile management with AI-powered bio generation.",
+  "requestFramePermissions": []
+}
