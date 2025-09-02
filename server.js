@@ -159,12 +159,11 @@ app.post('/api/generate-sql', async (req, res) => {
         console.log('[AI] Initializing OpenAI model...');
         const model = new ChatOpenAI({
             apiKey: apiKey,
-            modelName: "gpt-4-turbo", // Or "gpt-3.5-turbo"
+            modelName: "gpt-4", // Or "gpt-3.5-turbo"
             temperature: 0,
         });
 
         const parser = new JsonOutputParser();
-
         const formatInstructions = parser.getFormatInstructions();
 
         const schemaString = schema.map(t => 
@@ -190,6 +189,9 @@ app.post('/api/generate-sql', async (req, res) => {
             5.  **History:** Use the chat history for context if the user asks a follow-up question.
                 {history}
             6.  **Output Format:** You MUST respond with a JSON object that follows these instructions: {format_instructions}
+            7.  **IMPORTANT:** Do NOT include any text or markdown before or after the JSON. Only output the JSON object.
+            8.  If you cannot answer, return an empty JSON object: {}. Never apologize or explain, only output the JSON object.
+            9.  Always output the SQL query first in the JSON object, before any explanation or chart suggestion.
             `],
             ["human", "{prompt}"]
         ]);
@@ -197,15 +199,23 @@ app.post('/api/generate-sql', async (req, res) => {
         const chain = promptTemplate.pipe(model).pipe(parser);
         
         console.log('[AI] Invoking LangChain...');
-        const result = await chain.invoke({
-            dbType,
-            schema: schemaString,
-            history: historyString,
-            prompt,
-            format_instructions: formatInstructions,
-        });
+        let result;
+        try {
+            result = await chain.invoke({
+                dbType,
+                schema: schemaString,
+                history: historyString,
+                prompt,
+                format_instructions: formatInstructions,
+            });
+        } catch (jsonErr) {
+            // If the parser fails, return a clear error
+            console.error('[AI] JSON parsing error:', jsonErr.message);
+            return res.status(500).json({ error: 'AI response was not valid JSON.', details: jsonErr.message });
+        }
 
         console.log('[AI] Generation successful.');
+        console.log('[AI] Generated result:', result); // Log the AI's response (including SQL)
         res.json(result);
 
     } catch (err) {
